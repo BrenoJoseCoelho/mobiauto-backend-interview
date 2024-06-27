@@ -1,6 +1,6 @@
 # Projeto Mobiauto Backend
 
-**Observação**: Este projeto foi desenvolvido em um prazo curto, concluído em apenas dois dias.
+**Observação**: Este projeto foi desenvolvido em um prazo curto, concluído em apenas dois dias. Então pode ser encontrado inconsistências
 
 ## Introdução
 
