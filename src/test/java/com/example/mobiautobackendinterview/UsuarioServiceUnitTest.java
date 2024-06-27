@@ -1,0 +1,75 @@
+package com.example.mobiautobackendinterview;
+
+import com.example.mobiautobackendinterview.entity.Revenda;
+import com.example.mobiautobackendinterview.entity.Usuario;
+import com.example.mobiautobackendinterview.enuns.Perfil;
+import com.example.mobiautobackendinterview.repository.UsuarioRepository;
+import com.example.mobiautobackendinterview.service.RevendaService;
+import com.example.mobiautobackendinterview.service.UsuarioService;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+public class UsuarioServiceUnitTest {
+
+    @InjectMocks
+    private UsuarioService usuarioService;
+
+    @Mock
+    private UsuarioRepository usuarioRepository;
+
+    @Mock
+    private RevendaService revendaService;
+
+    @Test
+    public void salvar_DeveSalvarUsuarioComRevenda() {
+        // Mock Revenda
+        Revenda revenda = new Revenda();
+        revenda.setId(1L);
+        revenda.setCnpj("12345678000100");
+        revenda.setNomeSocial("Revenda Teste");
+
+        // Mock Usuario
+        Usuario usuario = new Usuario();
+        usuario.setNome("Teste");
+        usuario.setEmail("teste@teste.com");
+        usuario.setSenha("senha123");
+        usuario.setPerfil(Perfil.ADMIN);
+        usuario.setRevenda(revenda);
+
+        when(revendaService.findById(1L)).thenReturn(revenda);
+        when(usuarioRepository.save(usuario)).thenReturn(usuario);
+
+        // Executa o método de salvar
+        Usuario usuarioSalvo = usuarioService.salvar(usuario, 1L);
+
+        // Verifica se o usuário foi salvo corretamente
+        assertNotNull(usuarioSalvo);
+        assertEquals("Teste", usuarioSalvo.getNome());
+        assertEquals("teste@teste.com", usuarioSalvo.getEmail());
+        assertEquals("Revenda Teste", usuarioSalvo.getRevenda().getNomeSocial());
+    }
+
+    @Test
+    public void salvar_DeveLancarExcecaoQuandoRevendaNaoEncontrada() {
+        // Mock Usuario
+        Usuario usuario = new Usuario();
+        usuario.setNome("Teste");
+        usuario.setEmail("teste@teste.com");
+        usuario.setSenha("senha123");
+        usuario.setPerfil(Perfil.ADMIN);
+
+        when(revendaService.findById(1L)).thenReturn(null);
+
+        // Verifica se a exceção é lançada
+        assertThrows(IllegalArgumentException.class, () -> {
+            usuarioService.salvar(usuario, 1L);
+        });
+    }
+}
