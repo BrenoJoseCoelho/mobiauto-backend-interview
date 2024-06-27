@@ -35,7 +35,7 @@ Para executar a aplicação localmente sem Docker, siga os passos abaixo:
 1. **Clonar o Repositório:**
 
    ```bash
-   git clone [Projeto Github](https://github.com/BrenoJoseCoelho/mobiauto-backend-interview.git)
+   git clone https://github.com/BrenoJoseCoelho/mobiauto-backend-interview.git
    cd src
 
 2. **Compilar e Executar com Maven:**
