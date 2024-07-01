@@ -14,7 +14,7 @@ O projeto Mobiauto Backend é uma aplicação desenvolvida para gerenciar oportu
 - Spring Boot 2.7.0
 - Maven 3.8.x
 - H2 Database
-- Hibernate
+- PostgreSql
 - Spring Data JPA
 - Spring Security
 
