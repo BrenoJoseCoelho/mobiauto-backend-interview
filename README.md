@@ -1,6 +1,6 @@
 # Projeto Mobiauto Backend
 
-**Observação**: Este projeto foi desenvolvido em um prazo curto, concluído em apenas dois dias.
+**Observação**: Este projeto foi desenvolvido em um prazo curto, concluído em apenas dois dias. Então pode ser encontrado inconsistências
 
 ## Introdução
 
@@ -13,7 +13,7 @@ O projeto Mobiauto Backend é uma aplicação desenvolvida para gerenciar oportu
 - Java 11
 - Spring Boot 2.7.0
 - Maven 3.8.x
-- H2 Database
+- Hibernate
 - PostgreSql
 - Spring Data JPA
 - Spring Security
@@ -35,8 +35,9 @@ Para executar a aplicação localmente sem Docker, siga os passos abaixo:
 1. **Clonar o Repositório:**
 
    ```bash
-   git clone https://github.com/seu-usuario/seu-projeto.git
-   cd seu-projeto
+   git clone https://github.com/BrenoJoseCoelho/mobiauto-backend-interview.git
+   cd src
+
 2. **Compilar e Executar com Maven:**
 
    ```bash
