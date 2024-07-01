@@ -10,12 +10,10 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
+import javax.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.PriorityQueue;
+import java.util.*;
 
 @Service
 public class OportunidadeService {
@@ -33,18 +31,24 @@ public class OportunidadeService {
     private UsuarioService usuarioService;
 
     public Oportunidade criarOportunidade(Oportunidade oportunidade) {
-        if (oportunidade.getRevenda() == null || revendaService.findById(oportunidade.getRevenda().getId()) == null) {
-            throw new IllegalArgumentException("Revenda não encontrada");
-        }
+        Long revendaId = oportunidade.getRevenda().getId();
+        Long responsavelId = (oportunidade.getResponsavel() != null) ? oportunidade.getResponsavel().getId() : null;
 
-        if (oportunidade.getResponsavel() == null || usuarioService.buscarPorId(oportunidade.getResponsavel().getId()) == null) {
+        // Valida e busca a Revenda
+        Revenda revenda = revendaService.findById(revendaId);
+        oportunidade.setRevenda(revenda);
+
+        // Valida e busca o Responsável
+        Usuario responsavel = null;
+        if (responsavelId != null) {
+            responsavel = usuarioService.buscarPorId(responsavelId);
+        }
+        if (responsavel == null) {
             throw new IllegalArgumentException("Responsável não encontrado");
         }
+        oportunidade.setResponsavel(responsavel);
 
-        // Configurar status inicial da oportunidade
-        oportunidade.setStatus(StatusOportunidade.NOVO);
-
-        // Salvar a oportunidade no repositório
+        // Salva a Oportunidade
         return oportunidadeRepository.save(oportunidade);
     }
 
@@ -61,12 +65,17 @@ public class OportunidadeService {
 
     public Oportunidade atribuirResponsavel(Long oportunidadeId, Long responsavelId) {
         Oportunidade oportunidade = oportunidadeRepository.findById(oportunidadeId)
-                .orElseThrow(() -> new EntityNotFoundException("Oportunidade não encontrada"));
-        Usuario responsavel = usuarioRepository.findById(responsavelId)
-                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
+                .orElseThrow(() -> new EntityNotFoundException("Oportunidade com ID " + oportunidadeId + " não encontrada"));
+
+        // Valida e busca o Responsável
+        Usuario responsavel = null;
+        if (responsavelId != null) {
+            responsavel = usuarioService.buscarPorId(responsavelId);
+        }
+        if (responsavel == null) {
+            throw new IllegalArgumentException("Responsável não encontrado");
+        }
         oportunidade.setResponsavel(responsavel);
-        oportunidade.setDataAtribuicao(LocalDateTime.now());
-        oportunidade.setStatus(StatusOportunidade.EM_ATENDIMENTO);
         return oportunidadeRepository.save(oportunidade);
     }
 
@@ -78,24 +87,19 @@ public class OportunidadeService {
         List<Usuario> assistentes = usuarioRepository.findUsuariosWithOportunidadesByPerfil(Perfil.ASSISTENTE);
         List<Oportunidade> oportunidadesNaoAtribuidas = oportunidadeRepository.findByResponsavelAndStatus(null, StatusOportunidade.NOVO);
 
-        // Criar fila de prioridade para armazenar os assistentes
         PriorityQueue<Usuario> filaAssistentes = new PriorityQueue<>(Comparator.comparingInt(u -> {
             int oportunidadesEmAndamento = u.getOportunidades() != null ? u.getOportunidades().size() : 0;
             LocalDateTime ultimaAtribuicao = u.getUltimaAtribuicao();
-
-            // Calcular o tempo desde a última atribuição em segundos
             long segundosDesdeUltimaAtribuicao = ultimaAtribuicao != null ?
                     LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) - ultimaAtribuicao.toEpochSecond(ZoneOffset.UTC) : 0;
 
             return Math.toIntExact(oportunidadesEmAndamento + segundosDesdeUltimaAtribuicao);
         }));
 
-        // Adicionar assistentes à fila
         for (Usuario assistente : assistentes) {
             filaAssistentes.add(assistente);
         }
 
-        // Distribuir oportunidades para os assistentes da fila
         for (Oportunidade oportunidade : oportunidadesNaoAtribuidas) {
             if (!filaAssistentes.isEmpty()) {
                 Usuario assistente = filaAssistentes.poll();
@@ -104,7 +108,6 @@ public class OportunidadeService {
                 oportunidade.setStatus(StatusOportunidade.EM_ATENDIMENTO);
                 oportunidadeRepository.save(oportunidade);
 
-                // Adicionar oportunidade à lista de oportunidades do assistente
                 List<Oportunidade> oportunidadesDoAssistente = assistente.getOportunidades();
                 if (oportunidadesDoAssistente == null) {
                     oportunidadesDoAssistente = new ArrayList<>();
@@ -113,7 +116,6 @@ public class OportunidadeService {
                 assistente.setOportunidades(oportunidadesDoAssistente);
                 usuarioRepository.save(assistente);
 
-                // Atualizar tempo de espera do assistente que recebeu a oportunidade
                 assistente.setUltimaAtribuicao(LocalDateTime.now());
                 filaAssistentes.add(assistente);
             } else {
@@ -121,7 +123,7 @@ public class OportunidadeService {
             }
         }
     }
-
+    @Transactional
     public Oportunidade concluirOportunidade(Long oportunidadeId, String motivoConclusao) {
         Oportunidade oportunidade = oportunidadeRepository.findById(oportunidadeId)
                 .orElseThrow(() -> new EntityNotFoundException("Oportunidade não encontrada"));
@@ -133,5 +135,4 @@ public class OportunidadeService {
         return oportunidadeRepository.save(oportunidade);
     }
 
-    // Outros métodos conforme necessidade
 }

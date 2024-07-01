@@ -28,6 +28,7 @@ public class OportunidadeServiceUnitTest {
 
     @Mock
     private OportunidadeRepository oportunidadeRepository;
+
     @Mock(lenient = true)
     private RevendaService revendaService;
 
@@ -76,13 +77,17 @@ public class OportunidadeServiceUnitTest {
         // Mock Oportunidade
         Oportunidade oportunidade = new Oportunidade();
         oportunidade.setNomeCliente("Cliente Teste");
+        oportunidade.setRevenda(new Revenda());
+        oportunidade.getRevenda().setId(1L);
 
-        when(revendaService.findById(1L)).thenReturn(null);
+        when(revendaService.findById(1L)).thenThrow(new IllegalArgumentException("Revenda não encontrada"));
 
         // Verifica se a exceção é lançada
-        assertThrows(IllegalArgumentException.class, () -> {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
             oportunidadeService.criarOportunidade(oportunidade);
         });
+
+        assertEquals("Revenda não encontrada", exception.getMessage());
     }
 
     @Test
@@ -93,16 +98,19 @@ public class OportunidadeServiceUnitTest {
 
         // Mock Oportunidade com responsável null
         Oportunidade oportunidade = new Oportunidade();
+        oportunidade.setNomeCliente("Cliente Teste");
         oportunidade.setRevenda(revenda);
-        oportunidade.setResponsavel(null); // Aqui garantimos que o responsável é null
+        oportunidade.setResponsavel(new Usuario());
+        oportunidade.getResponsavel().setId(2L);
 
-        // Configuração do mock para retornar null quando buscarPorId é chamado com 1L
         when(revendaService.findById(1L)).thenReturn(revenda);
-        when(usuarioService.buscarPorId(1L)).thenReturn(null); // Simula o caso em que o responsável não é encontrado
+        when(usuarioService.buscarPorId(2L)).thenReturn(null); // Simula o caso em que o responsável não é encontrado
 
         // Verifica se a exceção é lançada
-        assertThrows(IllegalArgumentException.class, () -> {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
             oportunidadeService.criarOportunidade(oportunidade);
         });
+
+        assertEquals("Responsável não encontrado", exception.getMessage());
     }
 }

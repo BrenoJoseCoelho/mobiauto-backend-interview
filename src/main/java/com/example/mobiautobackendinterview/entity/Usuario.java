@@ -30,6 +30,7 @@ public class Usuario {
 
     @NotBlank
     @Email
+    @Column(unique = true)
     private String email;
 
     @NotBlank

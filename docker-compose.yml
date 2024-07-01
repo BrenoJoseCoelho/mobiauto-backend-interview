@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: postgres-db
+    restart: always
+    environment:
+      POSTGRES_DB: mobiauto
+      POSTGRES_USER: mobiauto
+      POSTGRES_PASSWORD: mobiauto123
+    ports:
+      - "5433:5432"

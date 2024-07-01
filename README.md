@@ -37,7 +37,6 @@ Para executar a aplicação localmente sem Docker, siga os passos abaixo:
    ```bash
    git clone https://github.com/seu-usuario/seu-projeto.git
    cd seu-projeto
-
 2. **Compilar e Executar com Maven:**
 
    ```bash
@@ -45,8 +44,15 @@ Para executar a aplicação localmente sem Docker, siga os passos abaixo:
    mvn spring-boot:run
    ou buildar o projeto e rodalo
    Acesso ao Swagger:
+   
+3. **Buildar e Executar o Docker:**
 
-3. **Acesso ao Swagger:**
+   ```bash
+   cd ../mobiauto-backend-interview
+   docker build .
+   docker-compose up -d
+
+4. **Acesso ao Swagger:**
    Após iniciar a aplicação, você pode acessar a interface Swagger para explorar e testar os endpoints:
 
    [Swagger UI](http://localhost:8080/swagger-ui/index.html)
@@ -56,7 +62,7 @@ Para executar a aplicação localmente sem Docker, siga os passos abaixo:
    - **Senha:** adminPassword
 
 
-4. **Testes:**   
+5. **Testes:**   
     ### Tecnologias Utilizadas para Testes
 
    - JUnit 5
@@ -68,11 +74,11 @@ Para executar a aplicação localmente sem Docker, siga os passos abaixo:
     Para executar os testes unitários e de integração com Maven, utilize o seguinte comando:
     - mvn test 
 
-5. **Variáveis de Ambiente:**
+6. **Variáveis de Ambiente:**
     ```bash
     A aplicação não requer variáveis de ambiente específicas para execução em ambiente de desenvolvimento.
 
-6. **Suporte e Contato:**   
+7. **Suporte e Contato:**   
     ```bash
     Email: breno.jose.coelho@gmail.com
     Linkedin: https://www.linkedin.com/in/breno-jose-coelho/

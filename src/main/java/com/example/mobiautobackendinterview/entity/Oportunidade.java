@@ -2,6 +2,7 @@ package com.example.mobiautobackendinterview.entity;
 
 import com.example.mobiautobackendinterview.enuns.StatusConclusao;
 import com.example.mobiautobackendinterview.enuns.StatusOportunidade;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import javax.persistence.*;
 import javax.validation.constraints.Email;
@@ -9,6 +10,8 @@ import javax.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "oportunidades")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "responsavel"})
 public class Oportunidade {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

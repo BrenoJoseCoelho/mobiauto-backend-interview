@@ -9,6 +9,7 @@ import com.example.mobiautobackendinterview.repository.RevendaRepository;
 import com.example.mobiautobackendinterview.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -24,65 +25,68 @@ public class UsuarioService {
 
     @Autowired
     private RevendaRepository revendaRepository;
-
     @Autowired
     private PasswordEncoder passwordEncoder;
+
     @Autowired
     private RevendaService revendaService;
 
-
-
-    public Usuario salvar(Usuario usuario, Long revendaId) {
-
+    public Usuario salvar(Usuario usuario, Long revendaId, CustomUserDetails userDetails) {
         Revenda revenda = revendaService.findById(revendaId);
         if (revenda == null) {
             throw new IllegalArgumentException("Revenda com o ID " + revendaId + " não encontrada");
         }
 
-        usuario.setRevenda(revenda);
 
+        usuario.setRevenda(revenda);
+        if (usuario.getSenha() != null) {
+            String senhaCodificada = passwordEncoder.encode(usuario.getSenha());
+            usuario.setSenha(senhaCodificada);
+        }
         return usuarioRepository.save(usuario);
     }
 
+    public Usuario atualizarUsuario(Long id, Usuario usuarioAtualizado, CustomUserDetails userDetails) {
+        Usuario usuarioExistente = buscarPorId(id);
+        if (usuarioExistente == null) {
+            throw new EntityNotFoundException("Usuário com ID " + id + " não encontrado");
+        }
+
+
+        usuarioExistente.setNome(usuarioAtualizado.getNome());
+        usuarioExistente.setEmail(usuarioAtualizado.getEmail());
+        usuarioExistente.setSenha(passwordEncoder.encode(usuarioAtualizado.getSenha()));
+        usuarioExistente.setPerfil(usuarioAtualizado.getPerfil());
+        usuarioExistente.setUltimaAtribuicao(usuarioAtualizado.getUltimaAtribuicao());
+
+        return usuarioRepository.save(usuarioExistente);
+    }
 
     public List<Usuario> listarTodos() {
         return usuarioRepository.findAll();
     }
 
     public Usuario buscarPorId(Long id) {
-        return usuarioRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
+        return usuarioRepository.findById(id).orElse(null);
     }
 
-    public Usuario buscarPorEmail(String email) {
-        return usuarioRepository.findByEmail(email)
-                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
+    public boolean isAdmin() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (principal instanceof CustomUserDetails) {
+            CustomUserDetails userDetails = (CustomUserDetails) principal;
+            return userDetails.getAuthorities().stream()
+                    .anyMatch(auth -> auth.getAuthority().equals("ADMIN"));
+        }
+        return false;
     }
 
-    // Outros métodos conforme necessidade
-
-    private boolean isAdmin(CustomUserDetails userDetails) {
-        return userDetails.getAuthorities().stream()
-                .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
-    }
-
-    private boolean isOwnerOrManager(CustomUserDetails userDetails, Long revendaId) {
-        // Verificar se o usuário é proprietário ou gerente da revenda com o ID fornecido
-        if (userDetails == null || userDetails.getUsuario() == null) {
+    private boolean isOwnerOfRevenda(CustomUserDetails userDetails, Revenda revenda) {
+        if (userDetails == null || userDetails.getUsuario() == null || revenda == null) {
             return false;
         }
 
         Usuario usuario = userDetails.getUsuario();
-
-        // Verificar se o perfil do usuário é Proprietário ou Gerente
-        if (usuario.getPerfil() == Perfil.PROPRIETARIO || usuario.getPerfil() == Perfil.GERENTE) {
-            // Verificar se o usuário está associado à revenda com o ID fornecido
-            if (usuario.getRevenda() != null && usuario.getRevenda().getId() != null &&
-                    usuario.getRevenda().getId().equals(revendaId)) {
-                return true;
-            }
-        }
-
-        return false;
+        return usuario.getPerfil() == Perfil.PROPRIETARIO && usuario.getRevenda() != null &&
+                usuario.getRevenda().getId().equals(revenda.getId());
     }
 }

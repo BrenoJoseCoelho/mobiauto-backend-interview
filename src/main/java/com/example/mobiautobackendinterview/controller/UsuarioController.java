@@ -8,9 +8,13 @@ import com.example.mobiautobackendinterview.entity.Revenda;
 import com.example.mobiautobackendinterview.entity.Usuario;
 import com.example.mobiautobackendinterview.service.RevendaService;
 import com.example.mobiautobackendinterview.service.UsuarioService;
+import io.swagger.v3.oas.annotations.Parameter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import com.example.mobiautobackendinterview.exception.UnauthorizedException;
 import org.webjars.NotFoundException;
@@ -29,34 +33,59 @@ public class UsuarioController {
     @Autowired
     private RevendaService revendaService;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+    @PreAuthorize("hasRole('ADMIN') or hasRole('PROPRIETARIO') or principal.username == 'admin'")
     @PostMapping
-    public ResponseEntity<Usuario> criarUsuario(@RequestBody UsuarioDTO usuarioDTO) {
-        String nome = usuarioDTO.getNome();
-        String email = usuarioDTO.getEmail();
-        String senha = usuarioDTO.getSenha();
-        String perfil = usuarioDTO.getPerfil();
-        Long revendaId = usuarioDTO.getRevendaId();
-        LocalDateTime ultimaAtribuicao = usuarioDTO.getUltimaAtribuicao();
+    public ResponseEntity<Usuario> criarUsuario(
+            @RequestBody UsuarioDTO usuarioDTO,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        // Criar objetos a partir dos parâmetros recebidos
+        // Conversão do DTO para a entidade Usuario
         Usuario usuario = new Usuario();
-        usuario.setNome(nome);
-        usuario.setEmail(email);
-        usuario.setSenha(senha);
-        usuario.setPerfil(Perfil.valueOf(perfil));
-        usuario.setUltimaAtribuicao(ultimaAtribuicao);
+        usuario.setNome(usuarioDTO.getNome());
+        usuario.setEmail(usuarioDTO.getEmail());
+        String senhaCodificada = passwordEncoder.encode(usuarioDTO.getSenha());
+        usuario.setSenha(senhaCodificada);
+        usuario.setPerfil(Perfil.valueOf(usuarioDTO.getPerfil()));
+        usuario.setUltimaAtribuicao(usuarioDTO.getUltimaAtribuicao());
 
-        // Carregar a Revenda pelo ID
-        Revenda revenda = revendaService.findById(revendaId);
+        // Busca da revenda associada
+        Revenda revenda = revendaService.findById(usuarioDTO.getRevendaId());
         if (revenda == null) {
-            throw new IllegalArgumentException("Revenda com o ID " + revendaId + " não encontrada");
+            throw new IllegalArgumentException("Revenda com o ID " + usuarioDTO.getRevendaId() + " não encontrada");
         }
-
         usuario.setRevenda(revenda);
 
-        // Salvar o usuário
-        Usuario novoUsuario = usuarioService.salvar(usuario, revendaId);
+        // Salvando o usuário
+        Usuario novoUsuario = usuarioService.salvar(usuario, usuarioDTO.getRevendaId(), userDetails);
         return ResponseEntity.ok(novoUsuario);
+    }
+
+    @PreAuthorize("hasRole('ADMIN') or hasRole('PROPRIETARIO') or principal.username == 'admin'")
+    @PutMapping("/{id}")
+    public ResponseEntity<Usuario> atualizarUsuario(
+            @PathVariable Long id,
+            @RequestBody UsuarioDTO usuarioDTO,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        Usuario usuarioExistente = usuarioService.buscarPorId(id);
+
+        if (usuarioExistente == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        // Atualiza os campos do usuário existente com os dados do DTO
+        usuarioExistente.setNome(usuarioDTO.getNome());
+        usuarioExistente.setEmail(usuarioDTO.getEmail());
+        usuarioExistente.setSenha(usuarioDTO.getSenha());
+        usuarioExistente.setPerfil(Perfil.valueOf(usuarioDTO.getPerfil()));
+        usuarioExistente.setUltimaAtribuicao(usuarioDTO.getUltimaAtribuicao());
+
+        // Chama o serviço para atualizar o usuário
+        Usuario usuarioAtualizado = usuarioService.atualizarUsuario(id,usuarioExistente, userDetails);
+
+        return ResponseEntity.ok(usuarioAtualizado);
     }
 
     @GetMapping
@@ -75,7 +104,6 @@ public class UsuarioController {
         return ResponseEntity.ok(usuario);
     }
 
-
     private boolean isAdmin(CustomUserDetails userDetails) {
         return userDetails.getAuthorities().stream()
                 .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
@@ -87,8 +115,6 @@ public class UsuarioController {
         }
 
         Usuario usuario = userDetails.getUsuario();
-
-        // Verificar se o usuário é proprietário da revenda
         return usuario.getPerfil() == Perfil.PROPRIETARIO && usuario.getRevenda() != null &&
                 usuario.getRevenda().getId().equals(revenda.getId());
     }

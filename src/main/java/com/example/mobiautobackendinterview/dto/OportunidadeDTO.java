@@ -3,26 +3,42 @@ package com.example.mobiautobackendinterview.dto;
 import com.example.mobiautobackendinterview.enuns.StatusConclusao;
 import com.example.mobiautobackendinterview.enuns.StatusOportunidade;
 
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
 public class OportunidadeDTO {
 
     private Long revendaId;
+
     private Long responsavelId;
-    private StatusOportunidade status;
+
     private String nomeCliente;
+
     private String emailCliente;
+
     private String telefoneCliente;
+
     private String marcaVeiculo;
+
     private String modeloVeiculo;
+
     private String versaoVeiculo;
+
     private String anoModeloVeiculo;
+
+    private StatusOportunidade status;
+
     private StatusConclusao statusConclusao;
+
     private String motivoConclusao;
+
     private LocalDateTime dataAtribuicao;
+
     private LocalDateTime dataConclusao;
 
-    // Getters and setters
+    // Getters e Setters
 
     public Long getRevendaId() {
         return revendaId;
@@ -38,14 +54,6 @@ public class OportunidadeDTO {
 
     public void setResponsavelId(Long responsavelId) {
         this.responsavelId = responsavelId;
-    }
-
-    public StatusOportunidade getStatus() {
-        return status;
-    }
-
-    public void setStatus(StatusOportunidade status) {
-        this.status = status;
     }
 
     public String getNomeCliente() {
@@ -102,6 +110,14 @@ public class OportunidadeDTO {
 
     public void setAnoModeloVeiculo(String anoModeloVeiculo) {
         this.anoModeloVeiculo = anoModeloVeiculo;
+    }
+
+    public StatusOportunidade getStatus() {
+        return status;
+    }
+
+    public void setStatus(StatusOportunidade status) {
+        this.status = status;
     }
 
     public StatusConclusao getStatusConclusao() {

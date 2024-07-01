@@ -16,10 +16,12 @@ public class RevendaService {
         validarCnpjUnico(revenda.getCnpj());
         return revendaRepository.save(revenda);
     }
+
     public Revenda findById(Long id) {
         return revendaRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Revenda não encontrada"));
     }
+
     public List<Revenda> listarTodas() {
         return revendaRepository.findAll();
     }

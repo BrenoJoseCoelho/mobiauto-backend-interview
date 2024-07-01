@@ -4,14 +4,13 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Set;
 
 public class CustomUserDetails implements UserDetails {
     private Usuario usuario;
-    private Set<GrantedAuthority> authorities;
+    private Set<? extends GrantedAuthority> authorities;
 
-    public CustomUserDetails(Usuario usuario, Set<GrantedAuthority> authorities) {
+    public CustomUserDetails(Usuario usuario, Set<? extends GrantedAuthority> authorities) {
         this.usuario = usuario;
         this.authorities = authorities;
     }
@@ -24,13 +23,9 @@ public class CustomUserDetails implements UserDetails {
         this.usuario = usuario;
     }
 
-    public CustomUserDetails(Usuario usuario) {
-        this.usuario = usuario;
-    }
-
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singleton(() -> usuario.getPerfil().name());
+        return authorities;
     }
 
     @Override
@@ -47,21 +42,21 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public boolean isAccountNonExpired() {
-        return true;
+        return true; // Implementar lógica se necessário
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        return true;
+        return true; // Implementar lógica se necessário
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
-        return true;
+        return true; // Implementar lógica se necessário
     }
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return true; // Implementar lógica se necessário
     }
 }
